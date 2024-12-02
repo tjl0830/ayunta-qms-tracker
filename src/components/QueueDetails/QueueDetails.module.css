@@ -6,7 +6,7 @@
   gap: 0;
   height: 510px;
   width: 1434px;
-  border-radius: 20px;
+  border-radius: 24px;
   background-color: #eaeaeabf;
 }
 
@@ -15,7 +15,6 @@
 .RightContainer {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   height: 100%;
 }
 
@@ -31,9 +30,9 @@
 .Container1,
 .Container2,
 .Container3 {
-  padding: 20px;
+  padding: 0px;
   margin: 10px;
-  border-radius: 8px;
+  border-radius: 16px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -44,6 +43,7 @@
   justify-content: center;
   align-items: center;
   height: 30%;
+  margin-bottom: 5px;
 }
 
 .Container1 p {
@@ -60,6 +60,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  margin-top: 5px;
 }
 
 .Container2 p {
