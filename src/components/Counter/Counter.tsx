@@ -34,7 +34,9 @@ const Counter: React.FC<CounterProps> = ({
         <p className={styles.CounterPurpose}>{formattedPurpose}</p>{" "}
         {/* Render formatted purpose */}
       </div>
-      <p className={styles.QueueNumber}>{QueueNumber}</p>
+      <div className={styles.QueueNumber}>
+        <p>{QueueNumber}</p>
+      </div>
     </div>
   );
 };

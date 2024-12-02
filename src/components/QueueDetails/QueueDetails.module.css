@@ -1,0 +1,134 @@
+/* Main Container Styles */
+.MainContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 0;
+  height: 510px;
+  width: 1434px;
+  border-radius: 20px;
+  background-color: #eaeaeabf;
+}
+
+/* Left and Right Containers */
+.LeftContainer,
+.RightContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+.LeftContainer {
+  width: 30%;
+}
+
+.RightContainer {
+  width: 70%;
+}
+
+/* Individual Container Styles */
+.Container1,
+.Container2,
+.Container3 {
+  padding: 20px;
+  margin: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.Container1 {
+  background-color: #013d21;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 30%;
+}
+
+.Container1 p {
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+}
+
+.Container2 {
+  background-color: #fff;
+  border-radius: 20px;
+  height: 70%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.Container2 p {
+  color: black;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+}
+
+.Container3 {
+  background-color: #fff;
+  border-radius: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.Container3 p {
+  font-family: Arial, sans-serif;
+}
+
+/* Header for Container 3 */
+.Container3 .Header {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+  color: #013d21;
+}
+
+/* Grid Layout for Next in Queue */
+.Grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+  grid-template-rows: repeat(5, 1fr); /* 5 equal rows */
+  grid-gap: 10px;
+  height: 100%;
+}
+
+/* Queue Item Styles */
+.QueueItem {
+  background-color: #d9d9d9;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
+  font-weight: 800;
+  color: black;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.QueueItem p {
+  margin: 0;
+}
+
+.Container1 .QueueNumber {
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.Container2 .CurrentNumber {
+  font-size: 80px;
+  font-weight: 800;
+}
+
+.Container2 .CounterNumber {
+  font-size: 24px;
+  color: #013d21;
+}

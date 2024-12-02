@@ -54,7 +54,7 @@ const GuestView = () => {
   // Function to handle the tracking action
   const handleTrack = () => {
     if (transactionId.trim()) {
-      navigate(`/DetailedView`); // Navigate to DetailedView page with transaction ID
+      navigate("/DetailedView", { state: { transactionId } }); // Pass transactionId as state
     } else {
       alert("Please enter a valid Transaction ID");
     }

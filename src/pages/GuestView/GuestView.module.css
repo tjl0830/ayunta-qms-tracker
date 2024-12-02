@@ -22,16 +22,16 @@ p {
 .Container {
   position: relative;
   text-align: center;
-  height: 100vh;
+  height: 100vh; /* Full viewport height */
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column; /* Stack elements vertically */
+  justify-content: center; /* Center elements vertically */
+  align-items: center; /* Center elements horizontally */
 }
 
-.Header{
+.Header {
   top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .Header h1 {
@@ -39,6 +39,7 @@ p {
   font-size: 50px;
   font-weight: bold;
   font-family: Arial, sans-serif;
+  margin-bottom: 0;
 }
 
 .FormContainer {
@@ -69,6 +70,9 @@ p {
 }
 
 .TrackButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 50px;
   width: 100px;
   font-size: 20px;
@@ -90,4 +94,10 @@ p {
   gap: 15px 200px;
   max-width: 1200px;
   margin-top: 20px;
+  justify-items: center;
+  align-items: center;
+}
+
+.QueueDetailsContainer {
+  padding-top: 20px;
 }
