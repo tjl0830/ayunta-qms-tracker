@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Background from "../../assets/background.jpg"; // Import the background image in PascalCase
 import Styles from "./GuestView.module.css"; // Import CSS module in PascalCase
 import Counter from "../../components/Counter/Counter"; // Import the reusable Counter component
+import { QueueSearch } from "../../Firebase/FirebaseFunctions"; // Import QueueSearch function
 
 const GuestView = () => {
   const [transactionId, setTransactionId] = useState(""); // State to hold transaction ID
@@ -53,8 +54,10 @@ const GuestView = () => {
 
   // Function to handle the tracking action
   const handleTrack = () => {
-    if (transactionId.trim()) {
-      navigate("/DetailedView", { state: { transactionId } }); // Pass transactionId as state
+    if (transactionId) {
+      // Call the QueueSearch function and pass the transactionId
+      navigate("/DetailedView", { state: { transactionId } });
+      QueueSearch({ transactionId });
     } else {
       alert("Please enter a valid Transaction ID");
     }
@@ -85,7 +88,7 @@ const GuestView = () => {
             id="transactionId"
             className={Styles.Input}
             value={transactionId}
-            onChange={(e) => setTransactionId(e.target.value)}
+            onChange={(e) => setTransactionId(e.target.value.toUpperCase())} // Ensure text is uppercase
             placeholder="Enter Transaction ID"
           />
           <button className={Styles.TrackButton} onClick={handleTrack}>
