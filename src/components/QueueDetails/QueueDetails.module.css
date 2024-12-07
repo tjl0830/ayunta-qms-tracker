@@ -119,12 +119,12 @@
   margin: 0;
 }
 
-.Container1 .QueueNumber {
+.Container1 .AssignedQueueNumber {
   font-size: 30px;
   font-weight: 800;
 }
 
-.Container2 .CurrentNumber {
+.Container2 .CurrentQueueNumber {
   font-size: 80px;
   font-weight: 800;
 }
