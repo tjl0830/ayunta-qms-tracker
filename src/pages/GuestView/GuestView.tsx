@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Background from "../../assets/background.jpg";
-import Styles from "./GuestView.module.css";
-import Counter from "../../components/Counter/Counter";
-import { QueueSearch } from "../../Firebase/FirebaseFunctions";
-import { ref, onValue } from "firebase/database";
 import { database } from "../../Firebase/FirebaseConfig";
-
+import { ref, onValue } from "firebase/database";
+import Background from "../../assets/background.jpg";
+import Counter from "../../components/Counter/Counter";
+import Styles from "./GuestView.module.css";
 
 const GuestView = () => {
   const [transactionId, setTransactionId] = useState("");
@@ -54,20 +52,53 @@ const GuestView = () => {
     };
   }, []); // Empty dependency array means this effect runs once on mount
 
-  // Function to handle the tracking action
-  const handleTrack = () => {
-    if (transactionId) {
-      const onDataUpdate = (data: any) => {
-        if (data) {
-          navigate("/DetailedView", { state: { transactionId } });
-        } else {
-          alert("No data found for this transaction ID.");
-        }
-      };
-
-      QueueSearch({ transactionId, onDataUpdate });
-    } else {
+  // Function to verify if transaction ID exists in any counter
+  const verifyTransactionId = async () => {
+    const trimmedId = transactionId.trim().toUpperCase();
+    if (!trimmedId) {
       alert("Please enter a valid Transaction ID");
+      return false;
+    }
+
+    // Check all counters for the transaction ID
+    let found = false;
+    const countersRef = ref(database, 'counters');
+    
+    return new Promise((resolve) => {
+      onValue(countersRef, (snapshot) => {
+        const countersData = snapshot.val();
+        
+        if (!countersData) {
+          resolve(false);
+          return;
+        }
+
+        // Check each counter's queue
+        Object.values(countersData).forEach((counter: any) => {
+          if (counter.queue) {
+            Object.values(counter.queue).forEach((queue: any) => {
+              if (queue.trackingId === trimmedId) {
+                found = true;
+              }
+            });
+          }
+        });
+
+        resolve(found);
+      }, {
+        onlyOnce: true // Only check once, don't set up a listener
+      });
+    });
+  };
+
+  // Function to handle the tracking action
+  const handleTrack = async () => {
+    const exists = await verifyTransactionId();
+    
+    if (exists) {
+      navigate("/DetailedView", { state: { transactionId: transactionId.trim().toUpperCase() } });
+    } else {
+      alert("No data found for this transaction ID.");
     }
   };
 

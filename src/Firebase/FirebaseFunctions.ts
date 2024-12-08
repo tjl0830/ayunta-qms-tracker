@@ -1,103 +1,115 @@
-import { ref, onValue } from "firebase/database";
-import { database } from "./FirebaseConfig"; // Firebase config import
+import { ref, onValue, off, DataSnapshot } from "firebase/database";
+import { database } from "./FirebaseConfig";
+
+// Interface for the queue item in Firebase
+interface QueueItem {
+  trackingId: string;
+  queueNumber: string;
+}
+
+// Interface for the counter's queue structure
+interface CounterQueue {
+  queue: Record<string, QueueItem>;
+}
+
+// Interface for the entire counters data structure
+interface CountersData {
+  [key: string]: CounterQueue;
+}
+
+interface QueueData {
+  AssignedTrackingId: string;
+  AssignedQueueNumber: string;
+  CurrentQueueNumber: string;
+  CounterNumber: string;
+  OtherQueueNumbers: string[];
+}
 
 interface QueueSearchProps {
   transactionId: string;
-  onDataUpdate: (data: any) => void; // Callback to notify when data is updated
+  onDataUpdate: (data: QueueData | null) => void;
 }
 
 export function QueueSearch({ transactionId, onDataUpdate }: QueueSearchProps) {
-  const trimmedUniqueId = transactionId.trim().toUpperCase();
-
-  if (!trimmedUniqueId) {
-    alert("Please enter your unique identifier.");
-    return;
+  // Validate transaction ID
+  if (!transactionId?.trim()) {
+    onDataUpdate(null);
+    return () => {};
   }
 
+  const trimmedUniqueId = transactionId.trim().toUpperCase();
   const queueRef = ref(database, "counters");
+  let isSubscribed = true;
 
-  // Listen for data changes in real time
-  onValue(
-    queueRef,
-    (snapshot) => {
-      const countersData = snapshot.val();
+  // Create the listener function
+  const handleDataChange = (snapshot: DataSnapshot) => {
+    if (!isSubscribed) return;
 
-      if (!countersData) {
-        alert("No counters found.");
-        return;
-      }
+    const countersData = snapshot.val() as CountersData | null;
 
-      let found = false;
-      let AssignedTrackingId: string = "";
-      let AssignedQueueNumber: string = "";
-      let CurrentQueueNumber: string = "";
-      let CounterNumber: string = "";
-      let OtherQueueNumbers: string[] = [];
+    if (!countersData) {
+      onDataUpdate(null);
+      return;
+    }
 
-      // Loop through the counters data to find matching transaction ID
-      for (const counterKey in countersData) {
+    let queueInfo: QueueData | null = null;
+
+    try {
+      // More efficient loop that breaks as soon as we find the match
+      counterLoop: for (const counterKey in countersData) {
         const queueList = countersData[counterKey]?.queue;
+        
+        if (!queueList) continue;
 
-        if (queueList) {
-          for (const queueId in queueList) {
-            const queueData = queueList[queueId];
+        const queueEntries = Object.entries(queueList) as [string, QueueItem][];
+        if (queueEntries.length === 0) continue;
 
-            if (queueData.trackingId === trimmedUniqueId) {
-              const firstKey = Object.keys(queueList)[0];
-              const firstItem = queueList[firstKey];
-              CurrentQueueNumber = firstItem.queueNumber;
+        // Get the first queue item for current number
+        const [_, firstItem] = queueEntries[0];
+        const currentQueueNumber = firstItem.queueNumber;
 
-              found = true;
+        // Find the matching transaction
+        for (const [, queueData] of queueEntries) {
+          if (queueData.trackingId === trimmedUniqueId) {
+            const otherQueueNumbers = queueEntries
+              .map(([, data]) => data.queueNumber)
+              .filter(num => num !== currentQueueNumber);
 
-              // Collect data for other queue numbers
-              for (const otherQueueId in queueList) {
-                const otherQueueData = queueList[otherQueueId];
-
-                if (otherQueueId === firstKey) {
-                  AssignedTrackingId = queueData.trackingId;
-                  AssignedQueueNumber = queueData.queueNumber;
-                  continue;
-                }
-
-                if (otherQueueId === queueId) {
-                  AssignedTrackingId = queueData.trackingId;
-                  AssignedQueueNumber = queueData.queueNumber;
-                  OtherQueueNumbers.push(`${AssignedQueueNumber}`);
-                } else {
-                  let QueueNumberData = otherQueueData.queueNumber;
-                  OtherQueueNumbers.push(QueueNumberData);
-                }
-              }
-
-              CounterNumber = counterKey;
-              break;
-            }
+            queueInfo = {
+              AssignedTrackingId: queueData.trackingId,
+              AssignedQueueNumber: queueData.queueNumber,
+              CurrentQueueNumber: currentQueueNumber,
+              CounterNumber: counterKey,
+              OtherQueueNumbers: otherQueueNumbers
+            };
+            
+            break counterLoop;
           }
         }
-
-        if (found) {
-          break;
-        }
       }
 
-      if (found) {
-        // Update state in the parent component via the callback
-        onDataUpdate({
-          AssignedTrackingId,
-          AssignedQueueNumber,
-          CurrentQueueNumber,
-          CounterNumber,
-          OtherQueueNumbers,
-        });
-      } else {
-        console.log("Your unique identifier was not found in any queue.");
+      if (isSubscribed) {
+        onDataUpdate(queueInfo);
+      }
+    } catch (error) {
+      console.error("Error processing queue data:", error);
+      if (isSubscribed) {
         onDataUpdate(null);
       }
-    },
-    (error) => {
-      console.error("Error fetching data from Firebase:", error);
     }
-  );
+  };
 
-  // The function doesn't need to return anything as onValue handles the real-time updates
+  // Attach the listener
+  onValue(queueRef, handleDataChange, (error) => {
+    console.error("Error fetching data:", error);
+    if (isSubscribed) {
+      onDataUpdate(null);
+    }
+  });
+
+  // Return cleanup function
+  return () => {
+    isSubscribed = false;
+    off(queueRef, 'value', handleDataChange);
+  };
 }
