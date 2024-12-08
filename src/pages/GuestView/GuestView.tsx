@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Background from "../../assets/background.jpg"; // Import the background image in PascalCase
-import Styles from "./GuestView.module.css"; // Import CSS module in PascalCase
-import Counter from "../../components/Counter/Counter"; // Import the reusable Counter component
-import { QueueSearch } from "../../Firebase/FirebaseFunctions"; // Import QueueSearch function
+import Background from "../../assets/background.jpg";
+import Styles from "./GuestView.module.css";
+import Counter from "../../components/Counter/Counter";
+import { QueueSearch } from "../../Firebase/FirebaseFunctions";
+import { ref, onValue } from "firebase/database";
+import { database } from "../../Firebase/FirebaseConfig";
+
 
 const GuestView = () => {
-  const [transactionId, setTransactionId] = useState(""); // State to hold transaction ID
-  const navigate = useNavigate(); // Hook to navigate to other pages
+  const [transactionId, setTransactionId] = useState("");
+  const [queueCounts, setQueueCounts] = useState<{ [key: number]: number }>({});
+  const navigate = useNavigate();
 
   // Array containing counter data
   const counters = [
@@ -28,21 +32,39 @@ const GuestView = () => {
     { number: 16, title: "COUNTER 16", purpose: "Cashier" },
   ];
 
+  useEffect(() => {
+    // Set up listeners for all counters
+    const unsubscribes = counters.map(counter => {
+      const queueRef = ref(database, `counters/${counter.number}/queue`);
+      
+      return onValue(queueRef, (snapshot) => {
+        const queueData = snapshot.val();
+        const count = queueData ? Object.keys(queueData).length : 0;
+        
+        setQueueCounts(prevCounts => ({
+          ...prevCounts,
+          [counter.number]: count
+        }));
+      });
+    });
+
+    // Cleanup function to remove all listeners
+    return () => {
+      unsubscribes.forEach(unsubscribe => unsubscribe());
+    };
+  }, []); // Empty dependency array means this effect runs once on mount
+
   // Function to handle the tracking action
   const handleTrack = () => {
     if (transactionId) {
-      // Define the onDataUpdate callback
       const onDataUpdate = (data: any) => {
         if (data) {
-          // If data is found, navigate to the DetailedView page with the transactionId
           navigate("/DetailedView", { state: { transactionId } });
         } else {
-          // Handle case where no data is found (e.g., show an alert or message)
           alert("No data found for this transaction ID.");
         }
       };
 
-      // Call the QueueSearch function and pass the transactionId and onDataUpdate callback
       QueueSearch({ transactionId, onDataUpdate });
     } else {
       alert("Please enter a valid Transaction ID");
@@ -52,15 +74,12 @@ const GuestView = () => {
   return (
     <div className={Styles.BackgroundColor}>
       <div className={Styles.Container}>
-        {/* Background image */}
         <img className={Styles.Background} src={Background} alt="dlsud-background" />
 
-        {/* Header */}
         <header className={Styles.Header}>
           <h1>Online Ayuntamiento Queue Tracker</h1>
         </header>
 
-        {/* Main content container */}
         <div className={Styles.FormContainer}>
           <label htmlFor="transactionId" className={Styles.Label}>
             Transaction ID:
@@ -70,7 +89,7 @@ const GuestView = () => {
             id="transactionId"
             className={Styles.Input}
             value={transactionId}
-            onChange={(e) => setTransactionId(e.target.value.toUpperCase())} // Ensure text is uppercase
+            onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
             placeholder="Enter Transaction ID"
           />
           <button className={Styles.TrackButton} onClick={handleTrack}>
@@ -78,7 +97,6 @@ const GuestView = () => {
           </button>
         </div>
 
-        {/* Counter Information */}
         <div className={Styles.CounterContainer}>
           {counters.map((counter) => (
             <Counter
@@ -86,7 +104,7 @@ const GuestView = () => {
               CounterNumber={counter.number}
               CounterTitle={counter.title}
               CounterPurpose={counter.purpose}
-              QueueNumber={0} // Default queue number
+              QueueNumber={queueCounts[counter.number] || 0}
             />
           ))}
         </div>
