@@ -11,40 +11,16 @@ const GuestView = () => {
 
   // Array containing counter data
   const counters = [
-    {
-      number: 1,
-      title: "COUNTER 1",
-      purpose: "Requesting and \n Claiming of Documents",
-    },
+    { number: 1, title: "COUNTER 1", purpose: "Requesting and \n Claiming of Documents" },
     { number: 2, title: "COUNTER 2", purpose: "Submission of Records" },
-    {
-      number: 3,
-      title: "COUNTER 3",
-      purpose: "Evaluation \n (Graduate Studies, BTM, BHM, MKA, MMA)",
-    },
-    {
-      number: 4,
-      title: "COUNTER 4",
-      purpose: "Evaluation \n (COed, CCJE, CLAC, CSCS)",
-    },
+    { number: 3, title: "COUNTER 3", purpose: "Evaluation \n (Graduate Studies, BTM, BHM, MKA, MMA)" },
+    { number: 4, title: "COUNTER 4", purpose: "Evaluation \n (COed, CCJE, CLAC, CSCS)" },
     { number: 5, title: "COUNTER 5", purpose: "Evaluation \n (CEAT Programs)" },
     { number: 6, title: "COUNTER 6", purpose: "Registration" },
     { number: 7, title: "COUNTER 7", purpose: "ID Card Application" },
-    {
-      number: 8,
-      title: "COUNTER 8",
-      purpose: "Submitting of Payables \n (Payable Section)",
-    },
-    {
-      number: 9,
-      title: "COUNTER 9",
-      purpose: "Submitting of Payables \n (Payable Section)",
-    },
-    {
-      number: 10,
-      title: "COUNTER 10",
-      purpose: "Student Clearance and \n Unholding of Student Portal",
-    },
+    { number: 8, title: "COUNTER 8", purpose: "Submitting of Payables \n (Payable Section)" },
+    { number: 9, title: "COUNTER 9", purpose: "Submitting of Payables \n (Payable Section)" },
+    { number: 10, title: "COUNTER 10", purpose: "Student Clearance and \n Unholding of Student Portal" },
     { number: 11, title: "COUNTER 11", purpose: "Releasing of Checks" },
     { number: 12, title: "COUNTER 12", purpose: "Assessment and Invoice" },
     { number: 14, title: "COUNTER 14", purpose: "Cashier" },
@@ -55,9 +31,19 @@ const GuestView = () => {
   // Function to handle the tracking action
   const handleTrack = () => {
     if (transactionId) {
-      // Call the QueueSearch function and pass the transactionId
-      navigate("/DetailedView", { state: { transactionId } });
-      QueueSearch({ transactionId });
+      // Define the onDataUpdate callback
+      const onDataUpdate = (data: any) => {
+        if (data) {
+          // If data is found, navigate to the DetailedView page with the transactionId
+          navigate("/DetailedView", { state: { transactionId } });
+        } else {
+          // Handle case where no data is found (e.g., show an alert or message)
+          alert("No data found for this transaction ID.");
+        }
+      };
+
+      // Call the QueueSearch function and pass the transactionId and onDataUpdate callback
+      QueueSearch({ transactionId, onDataUpdate });
     } else {
       alert("Please enter a valid Transaction ID");
     }
@@ -67,11 +53,7 @@ const GuestView = () => {
     <div className={Styles.BackgroundColor}>
       <div className={Styles.Container}>
         {/* Background image */}
-        <img
-          className={Styles.Background}
-          src={Background}
-          alt="dlsud-background"
-        />
+        <img className={Styles.Background} src={Background} alt="dlsud-background" />
 
         {/* Header */}
         <header className={Styles.Header}>

@@ -1,102 +1,103 @@
-// Import necessary Firebase functions
-import { ref, get } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 import { database } from "./FirebaseConfig"; // Firebase config import
 
 interface QueueSearchProps {
   transactionId: string;
+  onDataUpdate: (data: any) => void; // Callback to notify when data is updated
 }
 
-export async function QueueSearch({ transactionId }: QueueSearchProps) {
-  // Trim and format the transactionId for consistency
+export function QueueSearch({ transactionId, onDataUpdate }: QueueSearchProps) {
   const trimmedUniqueId = transactionId.trim().toUpperCase();
 
-  // Input validation: Ensure transactionId is provided
   if (!trimmedUniqueId) {
     alert("Please enter your unique identifier.");
     return;
   }
 
-  // Reference to the counters node in the Firebase database
   const queueRef = ref(database, "counters");
 
-  try {
-    // Fetch data from Firebase once
-    const snapshot = await get(queueRef);
-    const countersData = snapshot.val();
+  // Listen for data changes in real time
+  onValue(
+    queueRef,
+    (snapshot) => {
+      const countersData = snapshot.val();
 
-    // Check if counters data exists
-    if (!countersData) {
-      alert("No counters found.");
-      return;
-    }
+      if (!countersData) {
+        alert("No counters found.");
+        return;
+      }
 
-    let found = false;
-    let result: string = "Queue Data: \n";
-    let AssignedTrackingId: string = "";
-    let AssignedQueueNumber: string = "";
-    let CurrentQueueNumber: string = "";
-    let CounterNumber: string = "";
-    let OtherQueueNumbers: string = "";
+      let found = false;
+      let AssignedTrackingId: string = "";
+      let AssignedQueueNumber: string = "";
+      let CurrentQueueNumber: string = "";
+      let CounterNumber: string = "";
+      let OtherQueueNumbers: string[] = [];
 
-    // Iterate through all counters
-    for (const counterKey in countersData) {
-      const queueList = countersData[counterKey]?.queue;
+      // Loop through the counters data to find matching transaction ID
+      for (const counterKey in countersData) {
+        const queueList = countersData[counterKey]?.queue;
 
-      if (queueList) {
-        // Iterate through the queueList to find the entry matching the trackingId
-        for (const queueId in queueList) {
-          const queueData = queueList[queueId]; // Contains queueNumber and trackingId
+        if (queueList) {
+          for (const queueId in queueList) {
+            const queueData = queueList[queueId];
 
-          if (queueData.trackingId === trimmedUniqueId) {
-            // Get the first item in the queue
-            const firstKey = Object.keys(queueList)[0];
-            const firstItem = queueList[firstKey];
-            CurrentQueueNumber = firstItem.queueNumber;
+            if (queueData.trackingId === trimmedUniqueId) {
+              const firstKey = Object.keys(queueList)[0];
+              const firstItem = queueList[firstKey];
+              CurrentQueueNumber = firstItem.queueNumber;
 
-            // Prepare the result string with found data
-            found = true;
+              found = true;
 
-            // Loop through the queueList and append all other queue positions
-            for (const otherQueueId in queueList) {
-              const otherQueueData = queueList[otherQueueId];
+              // Collect data for other queue numbers
+              for (const otherQueueId in queueList) {
+                const otherQueueData = queueList[otherQueueId];
 
-              if (otherQueueId === firstKey) continue; // Skip the first item
+                if (otherQueueId === firstKey) {
+                  AssignedTrackingId = queueData.trackingId;
+                  AssignedQueueNumber = queueData.queueNumber;
+                  continue;
+                }
 
-              if (otherQueueId === queueId) {
-                // Add the found queue position with trackingId
-                AssignedTrackingId = queueData.trackingId;
-                AssignedQueueNumber = queueData.queueNumber;
-                OtherQueueNumbers += `${AssignedQueueNumber}(${AssignedTrackingId})\n`;
-              } else {
-                // Add other queue positions
-                let QueueNumberData = otherQueueData.queueNumber;
-                OtherQueueNumbers += `${QueueNumberData}\n`;
+                if (otherQueueId === queueId) {
+                  AssignedTrackingId = queueData.trackingId;
+                  AssignedQueueNumber = queueData.queueNumber;
+                  OtherQueueNumbers.push(`${AssignedQueueNumber}`);
+                } else {
+                  let QueueNumberData = otherQueueData.queueNumber;
+                  OtherQueueNumbers.push(QueueNumberData);
+                }
               }
+
+              CounterNumber = counterKey;
+              break;
             }
-            CounterNumber = counterKey; // Store the counter where the trackingId was found
-            result += `Assigned Tracking ID: ${AssignedTrackingId}\n`;
-            result += `Assigned Queue Number: ${AssignedQueueNumber}\n`;
-            result += `Counter ${counterKey}:\n`;
-            result += `Currently Serving: ${CurrentQueueNumber}:\n`;
-            result += `\nQueue Numbers:\n${OtherQueueNumbers}`;
-            break; // Stop checking other counters once the ID is found
           }
+        }
+
+        if (found) {
+          break;
         }
       }
 
       if (found) {
-        break; // Exit the loop once the ID is found
+        // Update state in the parent component via the callback
+        onDataUpdate({
+          AssignedTrackingId,
+          AssignedQueueNumber,
+          CurrentQueueNumber,
+          CounterNumber,
+          OtherQueueNumbers,
+        });
+      } else {
+        console.log("Your unique identifier was not found in any queue.");
+        onDataUpdate(null);
       }
+    },
+    (error) => {
+      console.error("Error fetching data from Firebase:", error);
     }
+  );
 
-    // Log the result to console or show a message if not found
-    if (found) {
-      console.log(result);
-    } else {
-      console.log("Your unique identifier was not found in any queue.");
-    }
-  } catch (error) {
-    // Handle errors with the database call
-    console.error("Error fetching data from Firebase:", error);
-  }
+  // The function doesn't need to return anything as onValue handles the real-time updates
 }

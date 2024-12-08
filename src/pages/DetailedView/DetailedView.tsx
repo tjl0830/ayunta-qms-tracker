@@ -61,7 +61,7 @@ const DetailedView = () => {
 
         {/* QueueDetails component placed outside the form container */}
         <div className={Styles.QueueDetailsContainer}>
-          <QueueDetails />
+          <QueueDetails transactionId={transactionId} />
         </div>
       </div>
     </div>
